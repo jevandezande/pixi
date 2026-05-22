@@ -1,9 +1,11 @@
 use pixi_build_types::{BinaryPackageSpec, SourcePackageLocationSpec, SourcePackageSpec};
-use pixi_spec::{BinarySpec, DetailedSpec, UrlBinarySpec};
+use pixi_spec::{
+    BinarySpec, DetailedSpec, MatchspecFields, SourceLocationSpec, UrlBinarySpec, UrlSourceSpec,
+};
 use rattler_conda_types::NamedChannelOrUrl;
 
-/// Converts a [`SourcePackageSpec`] to a [`pixi_spec::SourceSpec`].
-pub fn from_source_spec_v1(source: SourcePackageSpec) -> pixi_spec::SourceSpec {
+/// Converts a [`SourcePackageSpec`] to a [`pixi_spec::SourceLocationSpec`].
+pub fn from_source_spec_v1(source: SourcePackageSpec) -> SourceLocationSpec {
     let SourcePackageSpec {
         location,
         version,
@@ -12,67 +14,50 @@ pub fn from_source_spec_v1(source: SourcePackageSpec) -> pixi_spec::SourceSpec {
         subdir,
         license,
     } = source;
-    let location = from_source_package_location_spec(location);
-    pixi_spec::SourceSpec {
-        location,
+    let mut location = from_source_package_location_spec(location);
+    *location.matchspec_mut() = MatchspecFields {
         version,
         build,
         build_number,
         subdir,
         license,
-        extras: None,
-        flags: None,
-        namespace: None,
-        license_family: None,
-        condition: None,
-        track_features: None,
-    }
+        ..MatchspecFields::default()
+    };
+    location
 }
 
-pub fn from_source_package_location_spec(
-    spec: SourcePackageLocationSpec,
-) -> pixi_spec::SourceLocationSpec {
+pub fn from_source_package_location_spec(spec: SourcePackageLocationSpec) -> SourceLocationSpec {
     match spec {
-        SourcePackageLocationSpec::Url(url) => {
-            pixi_spec::SourceLocationSpec::Url(pixi_spec::UrlSourceSpec {
-                url: url.url,
-                md5: url.md5,
-                sha256: url.sha256,
-                subdirectory: url
-                    .subdirectory
-                    .and_then(|s| pixi_spec::Subdirectory::try_from(s).ok())
-                    .unwrap_or_default(),
-            })
-        }
+        SourcePackageLocationSpec::Url(url) => SourceLocationSpec::Url(UrlSourceSpec::new(
+            url.url,
+            url.md5,
+            url.sha256,
+            url.subdirectory
+                .and_then(|s| pixi_spec::Subdirectory::try_from(s).ok())
+                .unwrap_or_default(),
+        )),
 
-        SourcePackageLocationSpec::Git(git) => {
-            pixi_spec::SourceLocationSpec::Git(pixi_spec::GitSpec {
-                git: git.git,
-                rev: git.rev.map(|r| match r {
-                    pixi_build_frontend::types::GitReference::Branch(b) => {
-                        pixi_spec::GitReference::Branch(b)
-                    }
-                    pixi_build_frontend::types::GitReference::Tag(t) => {
-                        pixi_spec::GitReference::Tag(t)
-                    }
-                    pixi_build_frontend::types::GitReference::Rev(rev) => {
-                        pixi_spec::GitReference::Rev(rev)
-                    }
-                    pixi_build_frontend::types::GitReference::DefaultBranch => {
-                        pixi_spec::GitReference::DefaultBranch
-                    }
-                }),
-                subdirectory: git
-                    .subdirectory
-                    .and_then(|s| pixi_spec::Subdirectory::try_from(s).ok())
-                    .unwrap_or_default(),
-            })
-        }
+        SourcePackageLocationSpec::Git(git) => SourceLocationSpec::Git(pixi_spec::GitSpec::new(
+            git.git,
+            git.rev.map(|r| match r {
+                pixi_build_frontend::types::GitReference::Branch(b) => {
+                    pixi_spec::GitReference::Branch(b)
+                }
+                pixi_build_frontend::types::GitReference::Tag(t) => pixi_spec::GitReference::Tag(t),
+                pixi_build_frontend::types::GitReference::Rev(rev) => {
+                    pixi_spec::GitReference::Rev(rev)
+                }
+                pixi_build_frontend::types::GitReference::DefaultBranch => {
+                    pixi_spec::GitReference::DefaultBranch
+                }
+            }),
+            git.subdirectory
+                .and_then(|s| pixi_spec::Subdirectory::try_from(s).ok())
+                .unwrap_or_default(),
+        )),
 
         SourcePackageLocationSpec::Path(path) => {
-            pixi_spec::SourceLocationSpec::Path(pixi_spec::PathSourceSpec {
-                path: path.path.into(),
-            })
+            SourceLocationSpec::Path(pixi_spec::PathSourceSpec::new(path.path))
         }
     }
 }

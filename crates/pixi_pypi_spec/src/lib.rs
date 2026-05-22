@@ -349,11 +349,7 @@ mod tests {
     #[test]
     fn test_is_source_dependency_for_git() {
         let spec = PixiPypiSpec::new(PixiPypiSource::Git {
-            git: GitSpec {
-                git: Url::parse("https://github.com/example/repo").unwrap(),
-                rev: None,
-                subdirectory: Default::default(),
-            },
+            git: GitSpec::new(Url::parse("https://github.com/example/repo").unwrap(), None, Default::default()),
         });
         assert!(spec.is_source_dependency());
     }
@@ -395,11 +391,7 @@ mod tests {
         // Spec with extras
         let spec = PixiPypiSpec::with_extras_and_markers(
             PixiPypiSource::Git {
-                git: GitSpec {
-                    git: Url::parse("https://github.com/example/repo").unwrap(),
-                    rev: None,
-                    subdirectory: Default::default(),
-                },
+                git: GitSpec::new(Url::parse("https://github.com/example/repo").unwrap(), None, Default::default()),
             },
             vec![extra.clone()],
             MarkerTree::default(),
@@ -420,11 +412,7 @@ mod tests {
         // Spec with markers
         let spec = PixiPypiSpec::with_extras_and_markers(
             PixiPypiSource::Git {
-                git: GitSpec {
-                    git: Url::parse("https://github.com/example/repo").unwrap(),
-                    rev: None,
-                    subdirectory: Default::default(),
-                },
+                git: GitSpec::new(Url::parse("https://github.com/example/repo").unwrap(), None, Default::default()),
             },
             vec![],
             markers.clone(),
@@ -570,11 +558,7 @@ mod tests {
         assert_eq!(
             as_pypi_req,
             PixiPypiSpec::new(PixiPypiSource::Git {
-                git: GitSpec {
-                    git: Url::parse("https://github.com/ecederstrand/exchangelib").unwrap(),
-                    rev: Some(GitReference::DefaultBranch),
-                    subdirectory: Default::default(),
-                },
+                git: GitSpec::new(Url::parse("https://github.com/ecederstrand/exchangelib").unwrap(), Some(GitReference::DefaultBranch), Default::default()),
             })
         );
 
@@ -583,13 +567,9 @@ mod tests {
         assert_eq!(
             as_pypi_req,
             PixiPypiSpec::new(PixiPypiSource::Git {
-                git: GitSpec {
-                    git: Url::parse("https://github.com/ecederstrand/exchangelib").unwrap(),
-                    rev: Some(GitReference::Rev(
+                git: GitSpec::new(Url::parse("https://github.com/ecederstrand/exchangelib").unwrap(), Some(GitReference::Rev(
                         "b283011c6df4a9e034baca9aea19aa8e5a70e3ab".to_string()
-                    )),
-                    subdirectory: Default::default(),
-                },
+                    )), Default::default()),
             })
         );
 
@@ -678,11 +658,7 @@ mod tests {
         assert_eq!(
             PixiPypiSpec::try_from(parsed).unwrap(),
             PixiPypiSpec::new(PixiPypiSource::Git {
-                git: GitSpec {
-                    git: Url::parse("ssh://git@github.com/python-attrs/attrs.git").unwrap(),
-                    rev: Some(GitReference::Rev("main".to_string())),
-                    subdirectory: Default::default()
-                },
+                git: GitSpec::new(Url::parse("ssh://git@github.com/python-attrs/attrs.git").unwrap(), Some(GitReference::Rev("main".to_string())), Default::default()),
             })
         );
 
@@ -694,11 +670,7 @@ mod tests {
         assert_eq!(
             PixiPypiSpec::try_from(parsed).unwrap(),
             PixiPypiSpec::new(PixiPypiSource::Git {
-                git: GitSpec {
-                    git: Url::parse("https://github.com/Deltares/Ribasim.git").unwrap(),
-                    rev: Some(GitReference::DefaultBranch),
-                    subdirectory: Subdirectory::try_from("python/ribasim").unwrap(),
-                },
+                git: GitSpec::new(Url::parse("https://github.com/Deltares/Ribasim.git").unwrap(), Some(GitReference::DefaultBranch), Subdirectory::try_from("python/ribasim").unwrap()),
             })
         );
     }

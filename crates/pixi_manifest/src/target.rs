@@ -758,7 +758,7 @@ mod tests {
 
         // Add foo = "==2.0" with Overwrite behavior
         let foo = PackageName::from_str("foo").unwrap();
-        let spec = PixiSpec::Version(
+        let spec = PixiSpec::from(
             VersionSpec::from_str("==2.0", rattler_conda_types::ParseStrictness::Strict).unwrap(),
         );
 
@@ -810,7 +810,7 @@ mod tests {
         let foo = PackageName::from_str("foo").unwrap();
 
         // Add foo = "==1.0"
-        let spec1 = PixiSpec::Version(
+        let spec1 = PixiSpec::from(
             VersionSpec::from_str("==1.0", rattler_conda_types::ParseStrictness::Strict).unwrap(),
         );
         manifest_mut
@@ -825,7 +825,7 @@ mod tests {
             .unwrap();
 
         // Add foo = "==2.0" (should overwrite)
-        let spec2 = PixiSpec::Version(
+        let spec2 = PixiSpec::from(
             VersionSpec::from_str("==2.0", rattler_conda_types::ParseStrictness::Strict).unwrap(),
         );
         manifest_mut
@@ -840,7 +840,7 @@ mod tests {
             .unwrap();
 
         // Add foo = "==3.0" (should overwrite again)
-        let spec3 = PixiSpec::Version(
+        let spec3 = PixiSpec::from(
             VersionSpec::from_str("==3.0", rattler_conda_types::ParseStrictness::Strict).unwrap(),
         );
         manifest_mut
@@ -893,7 +893,7 @@ mod tests {
 
         // Try to add foo = "==2.0" with IgnoreDuplicate
         let foo = PackageName::from_str("foo").unwrap();
-        let spec = PixiSpec::Version(
+        let spec = PixiSpec::from(
             VersionSpec::from_str("==2.0", rattler_conda_types::ParseStrictness::Strict).unwrap(),
         );
 

@@ -4,12 +4,10 @@ assertion_line: 1671
 expression: snapshot
 ---
 - input: 1.2.3
-  result:
-    version: "==1.2.3"
+  result: "==1.2.3"
 - input:
     version: 1.2.3
-  result:
-    version: "==1.2.3"
+  result: "==1.2.3"
 - input:
     version: 1.2.3
     build-number: ">=3"
@@ -17,8 +15,7 @@ expression: snapshot
     version: "==1.2.3"
     build-number: ">=3"
 - input: "*"
-  result:
-    version: "*"
+  result: "*"
 - input:
     path: foobar
   result:

@@ -62,11 +62,11 @@ pub async fn add_conda_dep(
         source_specs = passed_specs
             .iter()
             .map(|(name, (_spec, spec_type))| {
-                let git_spec = GitSpec {
-                    git: git.clone(),
-                    rev: Some(git_options.reference.clone()),
-                    subdirectory: subdirectory.clone(),
-                };
+                let git_spec = GitSpec::new(
+                    git.clone(),
+                    Some(git_options.reference.clone()),
+                    subdirectory.clone(),
+                );
                 (
                     name.clone(),
                     (SourceLocationSpec::Git(git_spec).into(), *spec_type),

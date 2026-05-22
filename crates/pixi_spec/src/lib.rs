@@ -53,6 +53,7 @@ use rattler_conda_types::{
     ChannelConfig, MatchSpec, NamedChannelOrUrl, NamelessMatchSpec, PackageName,
     ParseChannelError, VersionSpec, package::CondaArchiveType,
 };
+#[cfg(feature = "rattler_lock")]
 pub use rattler_lock::Verbatim;
 pub use source_anchor::SourceAnchor;
 pub use subdirectory::{Subdirectory, SubdirectoryError};
@@ -89,8 +90,7 @@ pub enum SpecConversionError {
 /// A package specification for pixi.
 ///
 /// See the crate-level docs for the meaning of each variant.
-#[derive(Debug, Clone, Hash, ::serde::Serialize, PartialEq, Eq)]
-#[serde(untagged)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum PixiSpec {
     /// A bare version string or a detailed channel-based binary spec.
     Detailed(Box<DetailedSpec>),
@@ -118,10 +118,70 @@ impl Default for PixiSpec {
     }
 }
 
+impl ::serde::Serialize for PixiSpec {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ::serde::Serializer,
+    {
+        match self {
+            PixiSpec::Detailed(detailed) => {
+                // Collapse a Detailed spec whose only field is `version` back
+                // into a bare version string so the on-disk round-trip stays
+                // `foo = ">=1"` instead of the table form `foo = { version = ">=1" }`.
+                if let Some(version) = &detailed.version
+                    && detailed.build.is_none()
+                    && detailed.build_number.is_none()
+                    && detailed.file_name.is_none()
+                    && detailed.extras.is_none()
+                    && detailed.flags.is_none()
+                    && detailed.channel.is_none()
+                    && detailed.subdir.is_none()
+                    && detailed.md5.is_none()
+                    && detailed.sha256.is_none()
+                    && detailed.license.is_none()
+                    && detailed.license_family.is_none()
+                    && detailed.condition.is_none()
+                    && detailed.track_features.is_none()
+                {
+                    return serializer.serialize_str(&version.to_string());
+                }
+                detailed.serialize(serializer)
+            }
+            PixiSpec::UrlBinary(spec) => spec.serialize(serializer),
+            PixiSpec::PathBinary(spec) => spec.serialize(serializer),
+            PixiSpec::UrlSource(spec) => spec.serialize(serializer),
+            PixiSpec::PathSource(spec) => spec.serialize(serializer),
+            PixiSpec::Git(spec) => spec.serialize(serializer),
+        }
+    }
+}
+
 impl Display for PixiSpec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            PixiSpec::Detailed(detailed) => write!(f, "{detailed}"),
+            PixiSpec::Detailed(detailed) => {
+                // A Detailed spec carrying only a `version` was previously a
+                // `PixiSpec::Version(_)` and rendered as just the version
+                // string. Preserve that shorter form for error messages.
+                if let Some(version) = &detailed.version
+                    && detailed.build.is_none()
+                    && detailed.build_number.is_none()
+                    && detailed.file_name.is_none()
+                    && detailed.extras.is_none()
+                    && detailed.flags.is_none()
+                    && detailed.channel.is_none()
+                    && detailed.subdir.is_none()
+                    && detailed.md5.is_none()
+                    && detailed.sha256.is_none()
+                    && detailed.license.is_none()
+                    && detailed.license_family.is_none()
+                    && detailed.condition.is_none()
+                    && detailed.track_features.is_none()
+                {
+                    return write!(f, "{version}");
+                }
+                write!(f, "{detailed}")
+            }
             PixiSpec::UrlBinary(url) => write!(f, "{url}"),
             PixiSpec::PathBinary(path) => write!(f, "{path}"),
             PixiSpec::UrlSource(url) => write!(f, "{url}"),
