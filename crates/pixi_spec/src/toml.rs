@@ -572,11 +572,7 @@ impl TomlSpec {
             {
                 return Err(SpecError::NotAGitSpec);
             }
-            match (
-                loc.url.as_ref(),
-                loc.path.as_ref(),
-                loc.git.as_ref(),
-            ) {
+            match (loc.url.as_ref(), loc.path.as_ref(), loc.git.as_ref()) {
                 (Some(url), None, None) => {
                     if url
                         .path_segments()
@@ -648,10 +644,7 @@ impl TomlSpec {
                 ("`track-features`", self.track_features.is_some()),
             ] {
                 if is_some {
-                    return Err(SpecError::InvalidCombination(
-                        field_name.into(),
-                        key.into(),
-                    ));
+                    return Err(SpecError::InvalidCombination(field_name.into(), key.into()));
                 }
             }
         }
@@ -2308,7 +2301,10 @@ when = "__unix""#;
         let input = json!({ "path": "../foo", "extras": ["dev"] });
         let spec = parse_json_ok(input);
         let path = spec.as_path_source().expect("expected a path source spec");
-        assert_eq!(path.matchspec.extras.as_deref(), Some(&["dev".to_string()][..]));
+        assert_eq!(
+            path.matchspec.extras.as_deref(),
+            Some(&["dev".to_string()][..])
+        );
     }
 
     #[test]
@@ -2407,7 +2403,10 @@ flags = ["*[unclosed"]"#;
 extras = ["dev"]"#;
         let spec = parse_toml_ok(input);
         let path = spec.as_path_source().expect("expected a path source spec");
-        assert_eq!(path.matchspec.extras.as_deref(), Some(&["dev".to_string()][..]));
+        assert_eq!(
+            path.matchspec.extras.as_deref(),
+            Some(&["dev".to_string()][..])
+        );
     }
 
     #[test]

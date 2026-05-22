@@ -50,8 +50,8 @@ pub use matchspec_fields::MatchspecFields;
 pub use path::{PathBinarySpec, PathSourceSpec, PathSpec};
 pub use pin::{Pin, PinBound, PinError, PinExpression};
 use rattler_conda_types::{
-    ChannelConfig, MatchSpec, NamedChannelOrUrl, NamelessMatchSpec, PackageName,
-    ParseChannelError, VersionSpec, package::CondaArchiveType,
+    ChannelConfig, MatchSpec, NamedChannelOrUrl, NamelessMatchSpec, PackageName, ParseChannelError,
+    VersionSpec, package::CondaArchiveType,
 };
 #[cfg(feature = "rattler_lock")]
 pub use rattler_lock::Verbatim;
@@ -270,9 +270,21 @@ impl PixiSpec {
     pub fn has_version_spec(&self) -> bool {
         match self {
             Self::Detailed(d) => d.version.as_ref().is_some_and(|v| v != &VersionSpec::Any),
-            Self::UrlSource(u) => u.matchspec.version.as_ref().is_some_and(|v| v != &VersionSpec::Any),
-            Self::PathSource(p) => p.matchspec.version.as_ref().is_some_and(|v| v != &VersionSpec::Any),
-            Self::Git(g) => g.matchspec.version.as_ref().is_some_and(|v| v != &VersionSpec::Any),
+            Self::UrlSource(u) => u
+                .matchspec
+                .version
+                .as_ref()
+                .is_some_and(|v| v != &VersionSpec::Any),
+            Self::PathSource(p) => p
+                .matchspec
+                .version
+                .as_ref()
+                .is_some_and(|v| v != &VersionSpec::Any),
+            Self::Git(g) => g
+                .matchspec
+                .version
+                .as_ref()
+                .is_some_and(|v| v != &VersionSpec::Any),
             _ => false,
         }
     }

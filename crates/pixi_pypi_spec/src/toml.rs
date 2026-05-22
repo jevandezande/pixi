@@ -678,7 +678,11 @@ mod test {
         assert_eq!(
             requirement.first().unwrap().1,
             &PixiPypiSpec::new(PixiPypiSource::Git {
-                git: GitSpec::new(Url::parse("https://test.url.git").unwrap(), None, Default::default()),
+                git: GitSpec::new(
+                    Url::parse("https://test.url.git").unwrap(),
+                    None,
+                    Default::default()
+                ),
             })
         );
     }
@@ -693,7 +697,11 @@ mod test {
         assert_eq!(
             requirement.first().unwrap().1,
             &PixiPypiSpec::new(PixiPypiSource::Git {
-                git: GitSpec::new(Url::parse("https://test.url.git").unwrap(), Some(GitReference::Branch("main".to_string())), Default::default()),
+                git: GitSpec::new(
+                    Url::parse("https://test.url.git").unwrap(),
+                    Some(GitReference::Branch("main".to_string())),
+                    Default::default()
+                ),
             })
         );
     }
@@ -708,7 +716,11 @@ mod test {
         assert_eq!(
             requirement.first().unwrap().1,
             &PixiPypiSpec::new(PixiPypiSource::Git {
-                git: GitSpec::new(Url::parse("https://test.url.git").unwrap(), Some(GitReference::Tag("v.1.2.3".to_string())), Default::default()),
+                git: GitSpec::new(
+                    Url::parse("https://test.url.git").unwrap(),
+                    Some(GitReference::Tag("v.1.2.3".to_string())),
+                    Default::default()
+                ),
             })
         );
     }
@@ -723,7 +735,11 @@ mod test {
         assert_eq!(
             requirement.first().unwrap().1,
             &PixiPypiSpec::new(PixiPypiSource::Git {
-                git: GitSpec::new(Url::parse("https://github.com/pallets/flask.git").unwrap(), Some(GitReference::Tag("3.0.0".to_string())), Default::default()),
+                git: GitSpec::new(
+                    Url::parse("https://github.com/pallets/flask.git").unwrap(),
+                    Some(GitReference::Tag("3.0.0".to_string())),
+                    Default::default()
+                ),
             }),
         );
     }
@@ -738,7 +754,11 @@ mod test {
         assert_eq!(
             requirement.first().unwrap().1,
             &PixiPypiSpec::new(PixiPypiSource::Git {
-                git: GitSpec::new(Url::parse("https://test.url.git").unwrap(), Some(GitReference::Rev("123456".to_string())), Default::default()),
+                git: GitSpec::new(
+                    Url::parse("https://test.url.git").unwrap(),
+                    Some(GitReference::Rev("123456".to_string())),
+                    Default::default()
+                ),
             })
         );
     }

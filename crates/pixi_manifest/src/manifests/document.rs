@@ -899,11 +899,7 @@ hTTPx = ">=0.28.1,<0.29" # Some comment.
         document
             .add_dependency(
                 &PackageName::from_str("HtTpX").unwrap(),
-                &PixiSpec::from(
-                    "0.1.*"
-                        .parse::<rattler_conda_types::VersionSpec>()
-                        .unwrap(),
-                ),
+                &PixiSpec::from("0.1.*".parse::<rattler_conda_types::VersionSpec>().unwrap()),
                 SpecType::Run,
                 None,
                 &FeatureName::default(),
