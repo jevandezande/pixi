@@ -312,6 +312,44 @@
         },
         "condition": {
           "description": "The condition under which this match spec applies."
+        },
+        "licenseFamily": {
+          "description": "The license family of the package (e.g. `BSD`, `GPL`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "extras": {
+          "description": "Optional extra dependency groups to select on the package.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "flags": {
+          "description": "Plain string flags used to select package variants.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "default": null
+        },
+        "trackFeatures": {
+          "description": "Features the package needs to be built against.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -354,6 +392,47 @@
             "string",
             "null"
           ]
+        },
+        "licenseFamily": {
+          "description": "The license family of the package (e.g. `BSD`, `GPL`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "extras": {
+          "description": "Optional extra dependency groups to select on the package.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "flags": {
+          "description": "Plain string flags used to select package variants.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "default": null
+        },
+        "trackFeatures": {
+          "description": "Features the package needs to be built against.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "condition": {
+          "description": "The condition under which this match spec applies."
         }
       },
       "oneOf": [
