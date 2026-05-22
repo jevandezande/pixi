@@ -127,9 +127,12 @@ impl ::serde::Serialize for PixiSpec {
             PixiSpec::Detailed(detailed) => {
                 // Collapse a Detailed spec whose only field is `version` back
                 // into a bare version string so the on-disk round-trip stays
-                // `foo = ">=1"` instead of the table form `foo = { version = ">=1" }`.
-                if let Some(version) = &detailed.version
-                    && detailed.build.is_none()
+                // `foo = ">=1"` instead of the table form
+                // `foo = { version = ">=1" }`. A fully-empty Detailed
+                // (no version either) collapses to `"*"` for the same reason
+                // — that matches the pre-refactor `PixiSpec::Version(Any)`
+                // form, instead of an empty table `{}`.
+                if detailed.build.is_none()
                     && detailed.build_number.is_none()
                     && detailed.file_name.is_none()
                     && detailed.extras.is_none()
@@ -143,7 +146,12 @@ impl ::serde::Serialize for PixiSpec {
                     && detailed.condition.is_none()
                     && detailed.track_features.is_none()
                 {
-                    return serializer.serialize_str(&version.to_string());
+                    let version = detailed
+                        .version
+                        .clone()
+                        .unwrap_or(VersionSpec::Any)
+                        .to_string();
+                    return serializer.serialize_str(&version);
                 }
                 detailed.serialize(serializer)
             }
@@ -163,8 +171,7 @@ impl Display for PixiSpec {
                 // A Detailed spec carrying only a `version` was previously a
                 // `PixiSpec::Version(_)` and rendered as just the version
                 // string. Preserve that shorter form for error messages.
-                if let Some(version) = &detailed.version
-                    && detailed.build.is_none()
+                if detailed.build.is_none()
                     && detailed.build_number.is_none()
                     && detailed.file_name.is_none()
                     && detailed.extras.is_none()
@@ -178,6 +185,7 @@ impl Display for PixiSpec {
                     && detailed.condition.is_none()
                     && detailed.track_features.is_none()
                 {
+                    let version = detailed.version.clone().unwrap_or(VersionSpec::Any);
                     return write!(f, "{version}");
                 }
                 write!(f, "{detailed}")
@@ -243,8 +251,29 @@ impl PixiSpec {
                 }))
             }
         } else {
+            // A bare nameless spec (no fields other than possibly `version`)
+            // should default `version` to `Any` so it serializes as the
+            // bare string `"*"` instead of an empty table `{}`. This matches
+            // the pre-refactor `PixiSpec::Version(VersionSpec::Any)` form.
+            let is_bare = spec.build.is_none()
+                && spec.build_number.is_none()
+                && spec.file_name.is_none()
+                && spec.extras.is_none()
+                && spec.flags.is_none()
+                && spec.channel.is_none()
+                && spec.subdir.is_none()
+                && spec.md5.is_none()
+                && spec.sha256.is_none()
+                && spec.license.is_none()
+                && spec.license_family.is_none()
+                && spec.condition.is_none()
+                && spec.track_features.is_none();
             Self::Detailed(Box::new(DetailedSpec {
-                version: spec.version,
+                version: if is_bare {
+                    Some(spec.version.unwrap_or(VersionSpec::Any))
+                } else {
+                    spec.version
+                },
                 build: spec.build,
                 build_number: spec.build_number,
                 file_name: spec.file_name,
@@ -1175,6 +1204,25 @@ mod test {
         let json = serde_json::to_value(&spec).unwrap();
         assert_eq!(json, json!("==1.2.3"));
         assert_eq!(spec.to_string(), "==1.2.3");
+    }
+
+    /// A fully-empty Detailed (no `version` and no other fields) is
+    /// semantically `*`. It must serialize as the bare string `"*"` (and
+    /// `Display` the same way) — not as an empty TOML table `{}`. This
+    /// matches the pre-refactor `PixiSpec::Version(VersionSpec::Any)` form.
+    #[test]
+    fn test_empty_detailed_serializes_as_star() {
+        let channel_config = ChannelConfig::default_with_root_dir(std::env::current_dir().unwrap());
+        // The `from_nameless_matchspec` path: a bare name with no version
+        // produces a fully-empty Detailed.
+        let nameless = MatchSpec::from_str("any-spec", ParseMatchSpecOptions::lenient())
+            .unwrap()
+            .into_nameless()
+            .1;
+        let spec = PixiSpec::from_nameless_matchspec(nameless, &channel_config);
+        let json = serde_json::to_value(&spec).unwrap();
+        assert_eq!(json, json!("*"));
+        assert_eq!(spec.to_string(), "*");
     }
 
     /// A `Detailed` spec with *any* extra field present must serialize
