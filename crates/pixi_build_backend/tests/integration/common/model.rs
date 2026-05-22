@@ -209,16 +209,7 @@ fn convert_package_spec_to_v1(spec: &PackageSpec) -> PbtPackageSpec {
 
             PbtPackageSpec::Binary(PbtBinaryPackageSpec {
                 version: Some(version_spec),
-                build: None,
-                build_number: None,
-                file_name: None,
-                channel: None,
-                subdir: None,
-                md5: None,
-                sha256: None,
-                url: None,
-                license: None,
-                condition: None,
+                ..PbtBinaryPackageSpec::default()
             })
         }
         PackageSpec::Source(source_spec) => {

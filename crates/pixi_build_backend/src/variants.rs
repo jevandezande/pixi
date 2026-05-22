@@ -21,6 +21,10 @@ pub fn can_be_used_as_variant(spec: &pbt::PackageSpec) -> bool {
                 sha256,
                 url,
                 license,
+                license_family,
+                extras,
+                flags,
+                track_features,
                 condition,
             } = spec;
 
@@ -34,6 +38,10 @@ pub fn can_be_used_as_variant(spec: &pbt::PackageSpec) -> bool {
                 && sha256.is_none()
                 && url.is_none()
                 && license.is_none()
+                && license_family.is_none()
+                && extras.is_none()
+                && flags.is_none()
+                && track_features.is_none()
                 && condition.is_none()
         }
         _ => false,

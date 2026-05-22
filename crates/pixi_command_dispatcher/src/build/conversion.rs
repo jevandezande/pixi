@@ -13,6 +13,11 @@ pub fn from_source_spec_v1(source: SourcePackageSpec) -> SourceLocationSpec {
         build_number,
         subdir,
         license,
+        license_family,
+        extras,
+        flags,
+        track_features,
+        condition,
     } = source;
     let mut location = from_source_package_location_spec(location);
     *location.matchspec_mut() = MatchspecFields {
@@ -21,7 +26,11 @@ pub fn from_source_spec_v1(source: SourcePackageSpec) -> SourceLocationSpec {
         build_number,
         subdir,
         license,
-        ..MatchspecFields::default()
+        license_family,
+        extras,
+        flags,
+        track_features,
+        condition,
     };
     location
 }
@@ -81,6 +90,10 @@ pub fn from_binary_spec_v1(spec: BinaryPackageSpec) -> pixi_spec::BinarySpec {
             md5: None,
             sha256: None,
             license: None,
+            license_family: None,
+            extras: None,
+            flags: None,
+            track_features: None,
             condition: None,
             url: _,
         } => BinarySpec::Version(version),
@@ -94,6 +107,10 @@ pub fn from_binary_spec_v1(spec: BinaryPackageSpec) -> pixi_spec::BinarySpec {
             md5,
             sha256,
             license,
+            license_family,
+            extras,
+            flags,
+            track_features,
             condition,
             url: _,
         } => BinarySpec::DetailedVersion(Box::new(DetailedSpec {
@@ -101,14 +118,14 @@ pub fn from_binary_spec_v1(spec: BinaryPackageSpec) -> pixi_spec::BinarySpec {
             build,
             build_number,
             file_name,
-            extras: None,
-            flags: None,
+            extras,
+            flags,
             channel: channel.map(NamedChannelOrUrl::Url),
             subdir,
             license,
-            license_family: None,
+            license_family,
             condition,
-            track_features: None,
+            track_features,
             md5,
             sha256,
         })),

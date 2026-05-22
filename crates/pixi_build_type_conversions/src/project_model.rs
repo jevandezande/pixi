@@ -79,19 +79,6 @@ fn to_pixi_spec_v1(
                     )
                 }
             };
-            // Binary-only / unsupported matchspec fields are not (yet) part
-            // of `pbt::SourcePackageSpec`; reject them rather than silently
-            // dropping.
-            if matchspec.extras.is_some()
-                || matchspec.flags.is_some()
-                || matchspec.license_family.is_some()
-                || matchspec.condition.is_some()
-                || matchspec.track_features.is_some()
-            {
-                unimplemented!(
-                    "a particular field is not implemented in the pixi to pbt conversion"
-                );
-            }
             pbt::PackageSpec::Source(pbt::SourcePackageSpec {
                 location,
                 version: matchspec.version,
@@ -99,6 +86,11 @@ fn to_pixi_spec_v1(
                 build_number: matchspec.build_number,
                 subdir: matchspec.subdir,
                 license: matchspec.license,
+                license_family: matchspec.license_family,
+                extras: matchspec.extras,
+                flags: matchspec.flags,
+                track_features: matchspec.track_features,
+                condition: matchspec.condition,
             })
         }
         itertools::Either::Right(binary) => {
@@ -113,13 +105,14 @@ fn to_pixi_spec_v1(
                 sha256,
                 url,
                 license,
-                // These are currently explicitly ignored in the conversion
-                namespace: _,
-                extras: _,
+                license_family,
+                extras,
+                flags,
+                track_features,
                 condition,
-                track_features: _,
-                flags: _,
-                license_family: _,
+                // `namespace` is conda's legacy name field; pbt has no slot
+                // for it and pixi has never used it.
+                namespace: _,
             } = binary.try_into_nameless_match_spec(channel_config)?;
             pbt::PackageSpec::Binary(pbt::BinaryPackageSpec {
                 version,
@@ -132,6 +125,10 @@ fn to_pixi_spec_v1(
                 sha256,
                 url,
                 license,
+                license_family,
+                extras,
+                flags,
+                track_features,
                 condition,
             })
         }

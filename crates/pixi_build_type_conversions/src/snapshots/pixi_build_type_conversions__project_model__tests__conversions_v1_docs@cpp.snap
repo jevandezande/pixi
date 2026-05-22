@@ -1,6 +1,6 @@
 ---
 source: crates/pixi_build_type_conversions/src/project_model.rs
-assertion_line: 300
+assertion_line: 307
 expression: project_model
 ---
 {
@@ -31,7 +31,11 @@ expression: project_model
             "sha256": null,
             "url": null,
             "license": null,
-            "condition": null
+            "condition": null,
+            "licenseFamily": null,
+            "extras": null,
+            "flags": null,
+            "trackFeatures": null
           }
         },
         "nanobind": {
@@ -46,7 +50,11 @@ expression: project_model
             "sha256": null,
             "url": null,
             "license": null,
-            "condition": null
+            "condition": null,
+            "licenseFamily": null,
+            "extras": null,
+            "flags": null,
+            "trackFeatures": null
           }
         },
         "python": {
@@ -61,7 +69,11 @@ expression: project_model
             "sha256": null,
             "url": null,
             "license": null,
-            "condition": null
+            "condition": null,
+            "licenseFamily": null,
+            "extras": null,
+            "flags": null,
+            "trackFeatures": null
           }
         }
       },

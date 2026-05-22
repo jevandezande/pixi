@@ -63,6 +63,10 @@ impl PackageSpec for pbt::PackageSpec {
                     sha256,
                     url,
                     license,
+                    license_family,
+                    extras,
+                    flags,
+                    track_features,
                     condition,
                 } = spec;
 
@@ -76,6 +80,10 @@ impl PackageSpec for pbt::PackageSpec {
                     && sha256.is_none()
                     && url.is_none()
                     && license.is_none()
+                    && license_family.is_none()
+                    && extras.is_none()
+                    && flags.is_none()
+                    && track_features.is_none()
                     && condition.is_none()
             }
             _ => false,
@@ -131,12 +139,12 @@ impl BinarySpecExt for pbt::BinaryPackageSpec {
             sha256: self.sha256,
             url: self.url.clone(),
             license: self.license.clone(),
-            extras: None,
-            namespace: None,
+            license_family: self.license_family.clone(),
+            extras: self.extras.clone(),
+            flags: self.flags.clone(),
+            track_features: self.track_features.clone(),
             condition: self.condition.clone(),
-            track_features: None,
-            flags: None,
-            license_family: None,
+            namespace: None,
         }
     }
 }
@@ -168,6 +176,10 @@ mod tests {
             sha256: None,
             url: None,
             license: None,
+            license_family: None,
+            extras: None,
+            flags: None,
+            track_features: None,
             condition: None,
         };
 
@@ -202,6 +214,10 @@ mod tests {
             sha256: None,
             url: None,
             license: None,
+            license_family: None,
+            extras: None,
+            flags: None,
+            track_features: None,
             condition: None,
         };
 
@@ -234,6 +250,10 @@ mod tests {
             sha256: None,
             url: None,
             license: None,
+            license_family: None,
+            extras: None,
+            flags: None,
+            track_features: None,
             condition: None,
         };
 

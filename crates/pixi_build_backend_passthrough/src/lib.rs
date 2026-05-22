@@ -423,6 +423,10 @@ fn is_star_requirement(spec: &PackageSpec) -> bool {
             sha256: None,
             url: None,
             license: None,
+            license_family: None,
+            extras: None,
+            flags: None,
+            track_features: None,
             condition: None,
         } => version
             .as_ref()

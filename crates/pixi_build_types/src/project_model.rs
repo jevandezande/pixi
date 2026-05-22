@@ -312,6 +312,19 @@ pub struct SourcePackageSpec {
     /// The md5 hash of the package
     /// The license of the package
     pub license: Option<String>,
+    /// The license family of the package (e.g. `BSD`, `GPL`).
+    pub license_family: Option<String>,
+    /// Optional extra dependency groups to select on the package.
+    pub extras: Option<Vec<String>>,
+    /// Plain string flags used to select package variants.
+    #[serde_as(as = "Option<Vec<DisplayFromStr>>")]
+    #[cfg_attr(feature = "schemars", schemars(with = "Option<Vec<String>>"))]
+    pub flags: Option<Vec<StringMatcher>>,
+    /// Features the package needs to be built against.
+    pub track_features: Option<Vec<String>>,
+    /// The condition under which this match spec applies.
+    #[cfg_attr(feature = "schemars", schemars(with = "Option<serde_json::Value>"))]
+    pub condition: Option<MatchSpecCondition>,
 }
 
 impl From<PathSpec> for SourcePackageSpec {
@@ -323,6 +336,11 @@ impl From<PathSpec> for SourcePackageSpec {
             build_number: None,
             subdir: None,
             license: None,
+            license_family: None,
+            extras: None,
+            flags: None,
+            track_features: None,
+            condition: None,
         }
     }
 }
@@ -336,6 +354,11 @@ impl From<UrlSpec> for SourcePackageSpec {
             build_number: None,
             subdir: None,
             license: None,
+            license_family: None,
+            extras: None,
+            flags: None,
+            track_features: None,
+            condition: None,
         }
     }
 }
@@ -349,6 +372,11 @@ impl From<GitSpec> for SourcePackageSpec {
             build_number: None,
             subdir: None,
             license: None,
+            license_family: None,
+            extras: None,
+            flags: None,
+            track_features: None,
+            condition: None,
         }
     }
 }
@@ -490,6 +518,16 @@ pub struct BinaryPackageSpec {
     /// The condition under which this match spec applies.
     #[cfg_attr(feature = "schemars", schemars(with = "Option<serde_json::Value>"))]
     pub condition: Option<MatchSpecCondition>,
+    /// The license family of the package (e.g. `BSD`, `GPL`).
+    pub license_family: Option<String>,
+    /// Optional extra dependency groups to select on the package.
+    pub extras: Option<Vec<String>>,
+    /// Plain string flags used to select package variants.
+    #[serde_as(as = "Option<Vec<DisplayFromStr>>")]
+    #[cfg_attr(feature = "schemars", schemars(with = "Option<Vec<String>>"))]
+    pub flags: Option<Vec<StringMatcher>>,
+    /// Features the package needs to be built against.
+    pub track_features: Option<Vec<String>>,
 }
 
 impl From<VersionSpec> for BinaryPackageSpec {
@@ -727,18 +765,30 @@ impl Hash for SourcePackageSpec {
             build_number,
             subdir,
             license,
+            license_family,
+            extras,
+            flags,
+            track_features,
+            condition,
         } = self;
 
         // Hash the location first to ensure compatibility with older versions.
         location.hash(state);
 
         // Add the new fields using StableHashBuilder for forward/backward
-        // compatibility.
+        // compatibility. `condition` does not implement `Hash`, so go via
+        // its `Display`.
+        let condition = condition.as_ref().map(ToString::to_string);
         StableHashBuilder::<H>::new()
             .field("build", build)
             .field("build_number", build_number)
+            .field("condition", &condition)
+            .field("extras", extras)
+            .field("flags", flags)
             .field("license", license)
+            .field("license_family", license_family)
             .field("subdir", subdir)
+            .field("track_features", track_features)
             .field("version", version)
             .finish(state);
     }
@@ -852,10 +902,14 @@ impl Hash for BinaryPackageSpec {
             .field("channel", &self.channel)
             .field("file_name", &self.file_name)
             .field("license", &self.license)
+            .field("license_family", &self.license_family)
             .field("condition", &condition)
+            .field("extras", &self.extras)
+            .field("flags", &self.flags)
             .field("md5", &self.md5)
             .field("sha256", &self.sha256)
             .field("subdir", &self.subdir)
+            .field("track_features", &self.track_features)
             .field("url", &self.url)
             .field("version", &self.version)
             .finish(state);
@@ -1008,6 +1062,10 @@ mod tests {
             sha256: None,
             url: None,
             license: None,
+            license_family: None,
+            extras: None,
+            flags: None,
+            track_features: None,
             condition: None,
         };
         let hash2 = calculate_hash(&spec2);

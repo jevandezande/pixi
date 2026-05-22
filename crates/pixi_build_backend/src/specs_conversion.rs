@@ -200,8 +200,31 @@ pub(crate) fn source_package_spec_to_package_dependency(
     name: PackageName,
     source_spec: SourcePackageSpec,
 ) -> miette::Result<SourceMatchSpec> {
+    let SourcePackageSpec {
+        location: _,
+        version,
+        build,
+        build_number,
+        subdir,
+        license,
+        license_family,
+        extras,
+        flags,
+        track_features,
+        condition,
+    } = source_spec.clone();
     let spec = MatchSpec {
         name: PackageNameMatcher::Exact(name),
+        version,
+        build,
+        build_number,
+        subdir,
+        license,
+        license_family,
+        extras,
+        flags,
+        track_features,
+        condition,
         ..Default::default()
     };
 
@@ -226,6 +249,10 @@ fn binary_package_spec_to_package_dependency(
         sha256,
         url,
         license,
+        license_family,
+        extras,
+        flags,
+        track_features,
         condition,
     } = binary_spec;
 
@@ -248,9 +275,13 @@ fn binary_package_spec_to_package_dependency(
         &sha256,
         &url,
         &license,
+        &license_family,
+        &extras,
+        &flags,
+        &track_features,
         &condition,
     ) {
-        (None, None, None, None, None, None, None, None, None, None) => {
+        (None, None, None, None, None, None, None, None, None, None, None, None, None, None) => {
             version.filter(|v| v != &rattler_conda_types::VersionSpec::Any)
         }
         _ => Some(version.unwrap_or(rattler_conda_types::VersionSpec::Any)),
@@ -262,7 +293,7 @@ fn binary_package_spec_to_package_dependency(
         build,
         build_number,
         file_name,
-        extras: None,
+        extras,
         channel: channel.map(Channel::from_url).map(Arc::new),
         subdir,
         namespace: None,
@@ -270,10 +301,10 @@ fn binary_package_spec_to_package_dependency(
         sha256,
         url,
         license,
+        license_family,
         condition,
-        track_features: None,
-        flags: None,
-        license_family: None,
+        track_features,
+        flags,
     })
 }
 
