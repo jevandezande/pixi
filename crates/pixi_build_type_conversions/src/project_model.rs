@@ -25,9 +25,63 @@ fn to_pixi_spec_v1(
     // Convert into correct type for pixi
     let pbt_spec = match source_or_binary {
         itertools::Either::Left(source) => {
-            let matchspec = source.matchspec().clone();
-            // Binary-only / unsupported matchspec fields are not (yet) part of
-            // `pbt::SourcePackageSpec`; reject them rather than silently dropping.
+            // Pull the matchspec selectors and the location out of the
+            // source spec separately: the location maps to
+            // `pbt::SourcePackageLocationSpec`, the matchspec fields map
+            // onto the sibling fields of `pbt::SourcePackageSpec`.
+            let (location, matchspec) = match source {
+                SourceLocationSpec::Url(url_source_spec) => {
+                    let pixi_spec::UrlSourceSpec {
+                        url,
+                        md5,
+                        sha256,
+                        subdirectory,
+                        matchspec,
+                    } = url_source_spec;
+                    (
+                        pbt::SourcePackageLocationSpec::Url(pbt::UrlSpec {
+                            url,
+                            md5,
+                            sha256,
+                            subdirectory: subdirectory.to_option_string(),
+                        }),
+                        matchspec,
+                    )
+                }
+                SourceLocationSpec::Git(git_spec) => {
+                    let pixi_spec::GitSpec {
+                        git,
+                        rev,
+                        subdirectory,
+                        matchspec,
+                    } = git_spec;
+                    (
+                        pbt::SourcePackageLocationSpec::Git(pbt::GitSpec {
+                            git,
+                            rev: rev.map(|r| match r {
+                                GitReference::Branch(b) => pbt::GitReference::Branch(b),
+                                GitReference::Tag(t) => pbt::GitReference::Tag(t),
+                                GitReference::Rev(rev) => pbt::GitReference::Rev(rev),
+                                GitReference::DefaultBranch => pbt::GitReference::DefaultBranch,
+                            }),
+                            subdirectory: subdirectory.to_option_string(),
+                        }),
+                        matchspec,
+                    )
+                }
+                SourceLocationSpec::Path(path_source_spec) => {
+                    let pixi_spec::PathSourceSpec { path, matchspec } = path_source_spec;
+                    (
+                        pbt::SourcePackageLocationSpec::Path(pbt::PathSpec {
+                            path: path.to_string(),
+                        }),
+                        matchspec,
+                    )
+                }
+            };
+            // Binary-only / unsupported matchspec fields are not (yet) part
+            // of `pbt::SourcePackageSpec`; reject them rather than silently
+            // dropping.
             if matchspec.extras.is_some()
                 || matchspec.flags.is_some()
                 || matchspec.license_family.is_some()
@@ -38,46 +92,6 @@ fn to_pixi_spec_v1(
                     "a particular field is not implemented in the pixi to pbt conversion"
                 );
             }
-            let location = match source {
-                SourceLocationSpec::Url(url_source_spec) => {
-                    let pixi_spec::UrlSourceSpec {
-                        url,
-                        md5,
-                        sha256,
-                        subdirectory,
-                        matchspec: _,
-                    } = url_source_spec;
-                    pbt::SourcePackageLocationSpec::Url(pbt::UrlSpec {
-                        url,
-                        md5,
-                        sha256,
-                        subdirectory: subdirectory.to_option_string(),
-                    })
-                }
-                SourceLocationSpec::Git(git_spec) => {
-                    let pixi_spec::GitSpec {
-                        git,
-                        rev,
-                        subdirectory,
-                        matchspec: _,
-                    } = git_spec;
-                    pbt::SourcePackageLocationSpec::Git(pbt::GitSpec {
-                        git,
-                        rev: rev.map(|r| match r {
-                            GitReference::Branch(b) => pbt::GitReference::Branch(b),
-                            GitReference::Tag(t) => pbt::GitReference::Tag(t),
-                            GitReference::Rev(rev) => pbt::GitReference::Rev(rev),
-                            GitReference::DefaultBranch => pbt::GitReference::DefaultBranch,
-                        }),
-                        subdirectory: subdirectory.to_option_string(),
-                    })
-                }
-                SourceLocationSpec::Path(path_source_spec) => {
-                    pbt::SourcePackageLocationSpec::Path(pbt::PathSpec {
-                        path: path_source_spec.path.to_string(),
-                    })
-                }
-            };
             pbt::PackageSpec::Source(pbt::SourcePackageSpec {
                 location,
                 version: matchspec.version,
