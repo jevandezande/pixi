@@ -925,7 +925,7 @@ mod test {
     use serde_json::{Value, json};
     use url::Url;
 
-    use crate::{BinarySpec, PixiSpec};
+    use crate::{BinarySpec, MatchspecFields, PixiSpec};
 
     #[test]
     fn test_is_binary() {
@@ -1095,5 +1095,99 @@ mod test {
         let name = PackageName::new_unchecked("openssl");
         let match_spec = spec.to_match_spec(&name, &channel_config).unwrap();
         assert_eq!(match_spec.to_string(), "openssl >=2.0");
+    }
+
+    /// A path source spec carrying matchspec selectors should turn into a
+    /// `MatchSpec` carrying those same selectors (the location itself
+    /// is dropped — `to_match_spec` returns a *binary-shaped* matchspec
+    /// that the solver uses to pick which built output of the source
+    /// satisfies the constraint).
+    #[test]
+    fn test_path_source_with_matchspec_to_match_spec() {
+        let channel_config = ChannelConfig::default_with_root_dir(std::env::current_dir().unwrap());
+        let spec: PixiSpec = serde_json::from_value(json!({
+            "path": "../my-pkg",
+            "version": ">=1.0",
+            "build": "py310_*",
+            "subdir": "linux-64",
+        }))
+        .unwrap();
+
+        let name = PackageName::new_unchecked("my-pkg");
+        let match_spec = spec.to_match_spec(&name, &channel_config).unwrap();
+
+        assert_eq!(
+            match_spec.name.as_exact().map(PackageName::as_normalized),
+            Some("my-pkg")
+        );
+        assert_eq!(match_spec.version.unwrap().to_string(), ">=1.0");
+        assert_eq!(match_spec.subdir.as_deref(), Some("linux-64"));
+        assert!(match_spec.build.is_some());
+    }
+
+    /// `try_into_nameless_match_spec` on a source variant returns `None`
+    /// (sources don't have a fully-resolved nameless matchspec); use
+    /// `to_match_spec` or read `matchspec()` instead.
+    #[test]
+    fn test_try_into_nameless_match_spec_source_returns_none() {
+        let channel_config = ChannelConfig::default_with_root_dir(std::env::current_dir().unwrap());
+
+        let spec: PixiSpec = serde_json::from_value(json!({
+            "git": "https://example.com/foo.git",
+            "version": ">=1.0",
+        }))
+        .unwrap();
+        assert!(matches!(spec, PixiSpec::Git(_)));
+        let result = spec.try_into_nameless_match_spec(&channel_config).unwrap();
+        assert!(result.is_none());
+    }
+
+    /// `MatchspecFields::from_nameless_match_spec` extracts only the
+    /// matchspec subset; binary-only fields (`url`, `md5`, `sha256`,
+    /// `file_name`, `channel`, `namespace`) are dropped.
+    #[test]
+    fn test_matchspec_fields_extraction_drops_binary_fields() {
+        use rattler_conda_types::NamelessMatchSpec;
+        let nameless = NamelessMatchSpec {
+            version: Some(VersionSpec::from_str(">=1.0", Lenient).unwrap()),
+            build_number: Some(">=3".parse().unwrap()),
+            file_name: Some("foo.conda".to_string()),
+            md5: Some(Default::default()),
+            ..NamelessMatchSpec::default()
+        };
+        let fields = MatchspecFields::from_nameless_match_spec(&nameless);
+        assert_eq!(fields.version.as_ref().unwrap().to_string(), ">=1.0");
+        assert!(fields.build_number.is_some());
+        // Re-encoding to NamelessMatchSpec must NOT carry the binary-only
+        // fields back.
+        let round_tripped = fields.to_nameless_match_spec();
+        assert!(round_tripped.file_name.is_none());
+        assert!(round_tripped.md5.is_none());
+        assert!(round_tripped.url.is_none());
+    }
+
+    /// A bare-version `PixiSpec::Detailed` should serialize as a plain
+    /// string `"==1.2.3"` (not a `{ version = "==1.2.3" }` table), and
+    /// `Display` must mirror that shorter form.
+    #[test]
+    fn test_bare_version_serializes_as_string() {
+        let spec: PixiSpec = serde_json::from_value(json!({ "version": "1.2.3" })).unwrap();
+        let json = serde_json::to_value(&spec).unwrap();
+        assert_eq!(json, json!("==1.2.3"));
+        assert_eq!(spec.to_string(), "==1.2.3");
+    }
+
+    /// A `Detailed` spec with *any* extra field present must serialize
+    /// as a table — the bare-string collapse only applies when only
+    /// `version` is set.
+    #[test]
+    fn test_detailed_with_extra_field_serializes_as_table() {
+        let spec: PixiSpec = serde_json::from_value(json!({
+            "version": "1.2.3",
+            "build": "py37_*",
+        }))
+        .unwrap();
+        let value = serde_json::to_value(&spec).unwrap();
+        assert!(value.is_object(), "expected a JSON object, got {value}");
     }
 }

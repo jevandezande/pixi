@@ -82,6 +82,7 @@ impl InstalledSourceHints {
     /// Walk `installed` recursively, collapsing duplicates by
     /// `(name, source_location)` and picking a canonical representative
     /// per group.
+    #[allow(clippy::mutable_key_type)]
     pub fn from_records(installed: &[UnresolvedPixiRecord]) -> Self {
         let mut candidates: HashMap<(PackageName, SourceLocationSpec), Vec<InstalledSourceHint>> =
             HashMap::new();
@@ -148,6 +149,7 @@ impl Default for PtrArc<InstalledSourceHints> {
     }
 }
 
+#[allow(clippy::mutable_key_type)]
 fn collect(
     records: &[UnresolvedPixiRecord],
     out: &mut HashMap<(PackageName, SourceLocationSpec), Vec<InstalledSourceHint>>,

@@ -26,7 +26,7 @@ use pixi_spec_containers::DependencyMap;
 use pixi_test_utils::format_diagnostic;
 use pixi_utils::variants::VariantConfig;
 use rattler_conda_types::{
-    ChannelUrl, GenericVirtualPackage, PackageName, Platform, VersionSpec, prefix::Prefix,
+    ChannelUrl, GenericVirtualPackage, PackageName, Platform, prefix::Prefix,
 };
 use rattler_virtual_packages::{VirtualPackageOverrides, VirtualPackages};
 use url::Url;

@@ -1619,14 +1619,24 @@ mod test {
             json!({ "url": "https://conda.anaconda.org/conda-forge/linux-64/21cmfast-3.3.1-py38h0db86a8_1.conda", "sha256": "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3" }),
             json!({ "git": "https://github.com/conda-forge/21cmfast-feedstock" }),
             json!({ "git": "https://github.com/conda-forge/21cmfast-feedstock", "branch": "main" }),
+            // Source specs with matchspec selectors:
+            json!({ "path": "../mypkg", "version": "1.2.3" }),
+            json!({ "path": "../mypkg", "version": ">=1.2", "build": "py37_*" }),
+            json!({ "path": "../mypkg", "subdir": "linux-64", "track-features": ["legacy"] }),
+            json!({ "git": "https://github.com/foo/bar", "branch": "main", "version": ">=1.0", "extras": ["cuda"] }),
+            json!({ "url": "https://example.com/foo.tar.gz", "version": "1.2.3", "build-number": ">=3" }),
+            json!({ "url": "https://example.com/foo.tar.gz", "flags": ["cuda", "blas:*"] }),
             // Errors:
             json!({ "ver": "1.2.3" }),
-            json!({ "path": "foobar" , "version": "1.2.3" }),
             json!({ "version": "//" }),
             json!({ "path": "foobar", "version": "//" }),
             json!({ "path": "foobar", "sha256": "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3" }),
             json!({ "git": "https://github.com/conda-forge/21cmfast-feedstock", "branch": "main", "tag": "v1" }),
             json!({ "git": "https://github.com/conda-forge/21cmfast-feedstock", "sha256": "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3" }),
+            // A `.conda` URL is binary; matchspec selectors must be rejected.
+            json!({ "url": "https://example.com/foo.conda", "version": "1.2.3" }),
+            // A `.conda` path is binary; matchspec selectors must be rejected.
+            json!({ "path": "foo.conda", "version": "1.2.3" }),
             json! { "/path/style"},
             json! { "./path/style"},
             json! { "\\path\\style"},
@@ -2443,5 +2453,98 @@ track-features = ["legacy"]"#;
             git.matchspec.track_features.as_deref(),
             Some(&["legacy".to_string()][..])
         );
+    }
+
+    /// Source-side matchspec round-trips through JSON serialization:
+    /// a spec mixing a source location with several matchspec selectors
+    /// must parse, serialize, and re-parse to an equal `PixiSpec`.
+    #[test]
+    fn test_source_matchspec_roundtrip_full() {
+        let inputs: Vec<Value> = vec![
+            // path + multiple matchspec fields
+            json!({
+                "path": "../my-pkg",
+                "version": "1.2.3",
+                "build": "py37_*",
+                "build-number": ">=3",
+                "extras": ["cuda", "mkl"],
+                "subdir": "linux-64",
+                "license": "BSD-3-Clause",
+                "track-features": ["legacy"],
+            }),
+            // git + matchspec
+            json!({
+                "git": "https://github.com/foo/bar",
+                "branch": "main",
+                "version": ">=1.0",
+                "extras": ["dev"],
+            }),
+            // non-binary url + matchspec
+            json!({
+                "url": "https://example.com/foo.tar.gz",
+                "version": "1.2.3",
+                "build-number": ">=3",
+                "flags": ["cuda"],
+            }),
+        ];
+
+        for input in inputs {
+            let first: PixiSpec =
+                serde_json::from_value(input.clone()).expect("expected initial parse to succeed");
+            let serialized = serde_json::to_value(&first).expect("serialize should succeed");
+            let second: PixiSpec = serde_json::from_value(serialized.clone()).expect(
+                "round-trip parse should succeed",
+            );
+            assert_eq!(
+                first, second,
+                "round-trip mismatch for input:\n{input}\n\nrendered as: {serialized}"
+            );
+        }
+    }
+
+    /// A path source carrying matchspec selectors round-trips through
+    /// `PixiSpec::try_into_source_spec` and back into a `PixiSpec`, and
+    /// the matchspec fields survive intact via the accessor.
+    #[test]
+    fn test_source_location_spec_matchspec_accessor() {
+        use crate::SourceLocationSpec;
+
+        let spec = parse_toml_ok(
+            r#"path = "../my-pkg"
+version = ">=2.0"
+build = "py310_*"
+extras = ["test"]"#,
+        );
+
+        // Routing into a SourceLocationSpec preserves matchspec.
+        let source = spec
+            .clone()
+            .try_into_source_spec()
+            .expect("expected a source spec");
+        assert!(matches!(source, SourceLocationSpec::Path(_)));
+        let matchspec = source.matchspec();
+        assert_eq!(matchspec.version.as_ref().unwrap().to_string(), ">=2.0");
+        assert!(matchspec.build.is_some());
+        assert_eq!(matchspec.extras.as_deref(), Some(&["test".to_string()][..]));
+
+        // Lifting it back through `From<SourceLocationSpec>` returns the
+        // same `PixiSpec`.
+        let round_tripped = PixiSpec::from(source);
+        assert_eq!(spec, round_tripped);
+    }
+
+    /// `try_into_source_spec` returns the original `PixiSpec` (via `Err`)
+    /// when invoked on a binary variant.
+    #[test]
+    fn test_try_into_source_spec_rejects_binary() {
+        let detailed: PixiSpec = parse_json_ok(json!({ "version": "1.2.3" }));
+        let err = detailed.try_into_source_spec().unwrap_err();
+        assert!(matches!(err, PixiSpec::Detailed(_)));
+
+        let url_binary = parse_json_ok(json!({
+            "url": "https://conda.anaconda.org/conda-forge/linux-64/foo-1.0-py.conda",
+        }));
+        let err = url_binary.try_into_source_spec().unwrap_err();
+        assert!(matches!(err, PixiSpec::UrlBinary(_)));
     }
 }

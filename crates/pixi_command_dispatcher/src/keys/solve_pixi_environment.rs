@@ -417,6 +417,7 @@ async fn compute_inner(
 /// the seeds. Binary match specs are NOT collected here; they're
 /// derived downstream inside [`SolveCondaKey`] from the same
 /// assembled records (see `derive_fetch_specs_from_source_repodata`).
+#[allow(clippy::mutable_key_type)]
 async fn walk_and_resolve(
     ctx: &mut ComputeCtx,
     seeds: Vec<(PackageName, SourceLocationSpec)>,

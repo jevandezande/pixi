@@ -28,6 +28,7 @@ pub use version_or_star::VersionOrStar;
 /// - `Url`: From a direct URL to a package archive
 #[derive(Debug, Serialize, Clone, PartialEq, Eq, Hash)]
 #[serde(untagged, rename_all = "kebab-case")]
+#[allow(clippy::large_enum_variant)]
 pub enum PixiPypiSource {
     /// From a package registry with version constraints.
     Registry {

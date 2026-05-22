@@ -7,6 +7,7 @@ use typed_path::Utf8TypedPath;
 /// It serves as a reference point for interpreting relative or recursive
 /// source specifications, enabling consistent resolution of nested sources.
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[allow(clippy::large_enum_variant)]
 pub enum SourceAnchor {
     /// The source is relative to the workspace root.
     Workspace,
