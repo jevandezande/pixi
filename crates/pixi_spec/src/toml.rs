@@ -2492,9 +2492,8 @@ track-features = ["legacy"]"#;
             let first: PixiSpec =
                 serde_json::from_value(input.clone()).expect("expected initial parse to succeed");
             let serialized = serde_json::to_value(&first).expect("serialize should succeed");
-            let second: PixiSpec = serde_json::from_value(serialized.clone()).expect(
-                "round-trip parse should succeed",
-            );
+            let second: PixiSpec = serde_json::from_value(serialized.clone())
+                .expect("round-trip parse should succeed");
             assert_eq!(
                 first, second,
                 "round-trip mismatch for input:\n{input}\n\nrendered as: {serialized}"
